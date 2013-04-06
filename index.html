@@ -20,12 +20,6 @@ var camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
 var renderer = new THREE.WebGLRenderer();
 renderer.setSize(width, height);
 document.body.appendChild(renderer.domElement);
-
-var geometry = new MoebiusStrip({phiSteps: 100, thetaSteps: 100}).getGeometry();
-var material = new THREE.MeshPhongMaterial({side: THREE.DoubleSide});
-var surface = new THREE.Mesh(geometry, material);
-scene.add(surface);
-
 camera.position.z = 10;
 var directionalLight = new THREE.DirectionalLight(0xeeffee, 0.74);
 directionalLight.position.set(0, 1, 1);
@@ -211,6 +205,8 @@ var presets = {
   }
 };
 
+
+
 dat.GUI.prototype.removeFolder = function(name) {
   var folder = this.__folders[name];
   if (!folder) {
@@ -238,6 +234,8 @@ window.onload = function() {
     'SphereHarmonics',
     'SuperDuperShape'
   ]).onChange(changeShape);
+
+  changeShape('SphereHarmonics');
 };
 
 
@@ -264,7 +262,9 @@ function changeShape(shape) {
 }
 
 function changeSettings(shape, setting) {
-  scene.remove(surface);
+  if (surface) {
+    scene.remove(surface);
+  }
   if (setting) {
     setting.phiSteps = 100;
     setting.thetaSteps = 100;
@@ -275,7 +275,12 @@ function changeSettings(shape, setting) {
   scene.add(surface);
 }
 
+var surface;
+
+
 </script>
-<a href="https://github.com/eskimoblood/surfaceJs"><img style="position: absolute; top: 0; left: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_left_gray_6d6d6d.png" alt="Fork me on GitHub"></a>
+<a href="https://github.com/eskimoblood/surfaceJs"><img style="position: absolute; top: 0; left: 0; border: 0;"
+                                                        src="https://s3.amazonaws.com/github/ribbons/forkme_left_gray_6d6d6d.png"
+                                                        alt="Fork me on GitHub"></a>
 </body>
 </html>
