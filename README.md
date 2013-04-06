@@ -123,3 +123,6 @@ The project use grunt to compile and minify the CoffeScript source. So first ins
 Then compile the CoffeeScript
 
     grunt build
+
+##License
+MIT: http://koeberle.mit-license.org
