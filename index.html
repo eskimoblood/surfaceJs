@@ -3,6 +3,7 @@
 <head>
   <title></title>
   <script src="http://cdnjs.cloudflare.com/ajax/libs/three.js/r57/three.min.js"></script>
+  <script src="lib/TrackballControls.js"></script>
   <script src="http://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.5/dat.gui.min.js"></script>
   <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
   <script src="dist/surfaceLib.min.js"></script>
@@ -12,29 +13,48 @@
 <script type="text/javascript">
 // set the scene size
 var scene = new THREE.Scene();
-var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+var width = window.innerWidth - 200;
+var height = window.innerHeight;
+var camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
 
 var renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setSize(width, height);
 document.body.appendChild(renderer.domElement);
 
 var geometry = new MoebiusStrip({phiSteps: 100, thetaSteps: 100}).getGeometry();
 var material = new THREE.MeshPhongMaterial({side: THREE.DoubleSide});
-var cube = new THREE.Mesh(geometry, material);
-scene.add(cube);
+var surface = new THREE.Mesh(geometry, material);
+scene.add(surface);
 
 camera.position.z = 10;
 var directionalLight = new THREE.DirectionalLight(0xeeffee, 0.74);
 directionalLight.position.set(0, 1, 1);
 scene.add(directionalLight);
 
+var directionalLight = new THREE.DirectionalLight(0xeeffee, 0.74);
+directionalLight.position.set(0, 1, -1);
+scene.add(directionalLight);
+
+var controls = new THREE.TrackballControls(camera, renderer.domElement);
+controls.target.set(0, 0, 0);
+controls.rotateSpeed = 1;
+controls.zoomSpeed = .5;
+controls.panSpeed = 1;
+
+controls.noZoom = false;
+controls.noPan = false;
+
+controls.staticMoving = false;
+controls.dynamicDampingFactor = 0.3;
+
+controls.minDistance = 1;
+controls.maxDistance = 50;
+
 render();
 
 function render() {
   requestAnimationFrame(render);
-
-  cube.rotation.x += 0.01;
-  cube.rotation.y += 0.01;
+  controls.update();
   renderer.autoClear = true;
   renderer.render(scene, camera);
 }
@@ -225,14 +245,14 @@ window.onload = function() {
 function changeShape(shape) {
   var preset = presets[shape];
 
-  gui.removeFolder('lala');
+  gui.removeFolder('Settings');
   if (preset) {
-    var f2 = gui.addFolder('lala');
+    var settingsFolder = gui.addFolder('Settings');
     for (var i in preset) {
       var p = preset[i];
       setting[i] = p.value;
-      f2.add(setting, i, p.min, p.max).onChange(change);
-
+      settingsFolder.add(setting, i, p.min, p.max).onChange(change);
+      settingsFolder.open();
     }
   }
 
@@ -245,15 +265,15 @@ function changeShape(shape) {
 }
 
 function changeSettings(shape, setting) {
-  scene.remove(cube);
+  scene.remove(surface);
   if (setting) {
     setting.phiSteps = 100;
     setting.thetaSteps = 100;
   }
   var geometry = new window[shape](setting || { phiSteps: 100, thetaSteps: 100}).getGeometry();
   var material = new THREE.MeshPhongMaterial({side: THREE.DoubleSide});
-  cube = new THREE.Mesh(geometry, material);
-  scene.add(cube);
+  surface = new THREE.Mesh(geometry, material);
+  scene.add(surface);
 }
 
 </script>
