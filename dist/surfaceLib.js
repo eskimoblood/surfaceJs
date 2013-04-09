@@ -20,11 +20,13 @@
     Surface.prototype.Face4 = THREE.Face4;
 
     Surface.prototype.lookUp = function(steps, min, max) {
-      return function(calculateValue, param) {
-        var i, range, stepSize, value, _i, _results;
+      var range, stepSize;
 
-        range = min + (max - min);
-        stepSize = range / (steps - 1);
+      range = min + (max - min);
+      stepSize = range / (steps - 1);
+      return function(calculateValue, param) {
+        var i, value, _i, _results;
+
         _results = [];
         for (i = _i = 0; _i <= steps; i = _i += 1) {
           value = stepSize * i;
@@ -92,19 +94,26 @@
       geometry.dynamic = true;
       geometry.vertices = g.vertices;
       geometry.faces = g.faces;
+      geometry.vertexColors = g.colors;
+      geometry.colors = g.colors;
+      geometry.colorsNeedUpdate = true;
       geometry.computeFaceNormals();
       geometry.computeVertexNormals();
       return geometry;
     };
 
     Surface.prototype.calcFace = function(phi, theta) {
-      var a, b, c, d;
+      var a, b, c, ca, cb, d, face;
 
       a = phi * this.settings.thetaSteps + theta;
       b = a + 1;
       c = (phi + 1) * this.settings.thetaSteps + theta;
       d = c + 1;
-      return new this.Face4(a, c, d, b);
+      ca = this.colorsBetween(this.settings.colors, phi / this.settings.phiSteps);
+      cb = this.colorsBetween(this.settings.colors, (phi + 1) / this.settings.phiSteps);
+      face = new this.Face4(a, c, d, b);
+      face.vertexColors = [ca, cb, cb, ca];
+      return face;
     };
 
     Surface.prototype.setDefaults = function() {
@@ -118,6 +127,53 @@
         setDefault(setting);
       }
       return null;
+    };
+
+    Surface.prototype.calcColorArray = function(colors, stepSize) {
+      var i, _i, _results;
+
+      _results = [];
+      for (i = _i = 0; 0 <= stepSize ? _i <= stepSize : _i >= stepSize; i = 0 <= stepSize ? ++_i : --_i) {
+        _results.push(this.colorsBetween(colors, i / stepSize));
+      }
+      return _results;
+    };
+
+    Surface.prototype.colorBetween = function(startColor, endColor, step) {
+      var c;
+
+      c = this.calcColor(startColor, endColor, step);
+      return new THREE.Color(c(24) + c(16) + c(8) + c(0));
+    };
+
+    Surface.prototype.calcColor = function(startColor, endColor, step) {
+      return function(bit) {
+        var end, start;
+
+        start = startColor >> bit & 0xFF;
+        end = endColor >> bit & 0xFF;
+        return (start + (end - start) * step) << bit;
+      };
+    };
+
+    Surface.prototype.colorsBetween = function(colors, step) {
+      var a, f, length, newStep, nextA;
+
+      if (step <= 0) {
+        colors[0];
+      }
+      length = colors.length;
+      if (step >= 1) {
+        colors[length - 1];
+      }
+      a = Math.floor(length * step);
+      f = 1 / length;
+      newStep = (step - (a * f)) / f;
+      nextA = a + 1;
+      if (nextA >= length) {
+        nextA = 0;
+      }
+      return this.colorBetween(colors[a], colors[nextA], newStep);
     };
 
     return Surface;
@@ -299,8 +355,8 @@
 
     MoebiusStrip.prototype.getRange = function() {
       return {
-        minPhi: -1,
-        maxPhi: 1,
+        minPhi: -.4,
+        maxPhi: .4,
         minTheta: 0,
         maxTheta: Math.PI * 2
       };
@@ -309,13 +365,13 @@
     MoebiusStrip.prototype.preCalculateLookUps = function(lookUpPhi, lookUpTheta) {
       this.sinTheta = lookUpTheta(Math.sin);
       this.cosTheta = lookUpTheta(Math.cos);
-      this.sinThetaMultiply = lookUpTheta(this.multiplyFunc(Math.sin), .5);
-      this.cosThetaMultiply = lookUpTheta(this.multiplyFunc(Math.cos), .5);
-      return this.identityPhi = lookUpPhi();
+      this.sinThetaMultiply = lookUpTheta(this.multiplyFunc(Math.sin), 0.5);
+      this.cosThetaMultiply = lookUpTheta(this.multiplyFunc(Math.cos), 0.5);
+      return this.identityPhi = lookUpPhi(this.multiply, 1);
     };
 
     MoebiusStrip.prototype.calcVertex = function(phi, theta) {
-      return new this.Vector3(this.cosTheta[theta] + (this.identityPhi[phi] * this.cosThetaMultiply[theta]), this.sinTheta[theta] + (this.identityPhi[phi] * this.sinThetaMultiply[theta]), this.identityPhi[phi] * this.sinThetaMultiply[theta]);
+      return new this.Vector3(this.cosTheta[theta] * (1 + this.identityPhi[phi] * this.cosThetaMultiply[theta]), this.sinTheta[theta] + (1 + this.identityPhi[phi] * this.cosThetaMultiply[theta]), this.identityPhi[phi] * this.sinThetaMultiply[theta]);
     };
 
     return MoebiusStrip;

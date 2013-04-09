@@ -2,11 +2,11 @@
 <html>
 <head>
   <title></title>
-  <script src="http://cdnjs.cloudflare.com/ajax/libs/three.js/r57/three.min.js"></script>
+  <script src="http://mrdoob.github.io/three.js/build/three.js"></script>
   <script src="lib/TrackballControls.js"></script>
   <script src="http://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.5/dat.gui.min.js"></script>
   <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-  <script src="dist/surfaceLib.min.js"></script>
+  <script src="dist/surfaceLib.js"></script>
 
 </head>
 <body>
@@ -20,14 +20,28 @@ var camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
 var renderer = new THREE.WebGLRenderer();
 renderer.setSize(width, height);
 document.body.appendChild(renderer.domElement);
-camera.position.z = 10;
-var directionalLight = new THREE.DirectionalLight(0xeeffee, 0.74);
-directionalLight.position.set(0, 1, 1);
-scene.add(directionalLight);
 
-var directionalLight = new THREE.DirectionalLight(0xeeffee, 0.74);
-directionalLight.position.set(0, -1, -1);
-scene.add(directionalLight);
+
+camera.position.z = 10;
+light = new THREE.DirectionalLight(0xffffff);
+light.position.set(0, 0, 1);
+light.position.normalize();
+scene.add(light);
+
+light = new THREE.DirectionalLight(0xffffff);
+light.position.set(0, 0, -1);
+light.position.normalize();
+scene.add(light);
+
+light = new THREE.DirectionalLight(0xffffff);
+light.position.set(0, 1, -1);
+light.position.normalize();
+scene.add(light);
+
+light = new THREE.DirectionalLight(0xffffff);
+light.position.set(0, -1, -1);
+light.position.normalize();
+scene.add(light);
 
 var controls = new THREE.TrackballControls(camera, renderer.domElement);
 controls.target.set(0, 0, 0);
@@ -54,7 +68,7 @@ function render() {
 }
 
 var Settings = function() {
-  this.shape = "SphereHarmonics";
+  this.shape = "SuperDuperShape";
   this.m0 = 10;
   this.m1 = 10;
   this.m2 = 0;
@@ -205,8 +219,6 @@ var presets = {
   }
 };
 
-
-
 dat.GUI.prototype.removeFolder = function(name) {
   var folder = this.__folders[name];
   if (!folder) {
@@ -228,6 +240,7 @@ window.onload = function() {
     'EnnepersSurface',
     'FishSurface',
     'Horn',
+    'MoebiusStrip',
     'Pillow',
     'Shell',
     'Sphere',
@@ -235,14 +248,17 @@ window.onload = function() {
     'SuperDuperShape'
   ]).onChange(changeShape);
 
-  changeShape('SphereHarmonics');
+  changeShape('SuperDuperShape');
 };
 
 
 function changeShape(shape) {
   var preset = presets[shape];
 
-  gui.removeFolder('Settings');
+  if (gui) {
+    gui.removeFolder('Settings');
+  }
+
   if (preset) {
     var settingsFolder = gui.addFolder('Settings');
     for (var i in preset) {
@@ -258,29 +274,28 @@ function changeShape(shape) {
     changeSettings(shape, setting);
   }
 
-
 }
 
 function changeSettings(shape, setting) {
-  if (surface) {
-    scene.remove(surface);
-  }
+  scene.remove(surface);
+  var phiSteps = 100;
+  var thetaSteps = 100;
+  var colors = [0xD2FF91, 0x91AB01, 0x306B09, 0xF1B705, 0x9E0B46, 0xD2FF91];
   if (setting) {
-    setting.phiSteps = 100;
-    setting.thetaSteps = 100;
+    setting.phiSteps = phiSteps;
+    setting.thetaSteps = thetaSteps;
+    setting.colors = colors
+
+  } else {
+    setting = { phiSteps: phiSteps, thetaSteps: thetaSteps, colors: colors}
   }
-  var geometry = new window[shape](setting || { phiSteps: 100, thetaSteps: 100}).getGeometry();
-  var material = new THREE.MeshPhongMaterial({side: THREE.DoubleSide});
+  var geometry = new window[shape](setting).getGeometry();
+  var material = new THREE.MeshPhongMaterial({  side: THREE.DoubleSide, vertexColors: THREE.VertexColors });
   surface = new THREE.Mesh(geometry, material);
   scene.add(surface);
 }
-
 var surface;
 
-
 </script>
-<a href="https://github.com/eskimoblood/surfaceJs"><img style="position: absolute; top: 0; left: 0; border: 0;"
-                                                        src="https://s3.amazonaws.com/github/ribbons/forkme_left_gray_6d6d6d.png"
-                                                        alt="Fork me on GitHub"></a>
 </body>
 </html>
