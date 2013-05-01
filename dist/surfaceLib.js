@@ -1,5 +1,5 @@
 (function() {
-  var _ref, _ref1, _ref10, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9,
+  var calcColor, calcColorArray, colorBetween, colorsBetween, _ref, _ref1, _ref10, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -109,8 +109,8 @@
       b = a + 1;
       c = (phi + 1) * this.settings.thetaSteps + theta;
       d = c + 1;
-      ca = this.colorsBetween(this.settings.colors, phi / this.settings.phiSteps);
-      cb = this.colorsBetween(this.settings.colors, (phi + 1) / this.settings.phiSteps);
+      ca = new THREE.Color(colorsBetween(this.settings.colors, phi / this.settings.phiSteps));
+      cb = new THREE.Color(colorsBetween(this.settings.colors, (phi + 1) / this.settings.phiSteps));
       face = new this.Face4(a, c, d, b);
       face.vertexColors = [ca, cb, cb, ca];
       return face;
@@ -127,53 +127,6 @@
         setDefault(setting);
       }
       return null;
-    };
-
-    Surface.prototype.calcColorArray = function(colors, stepSize) {
-      var i, _i, _results;
-
-      _results = [];
-      for (i = _i = 0; 0 <= stepSize ? _i <= stepSize : _i >= stepSize; i = 0 <= stepSize ? ++_i : --_i) {
-        _results.push(this.colorsBetween(colors, i / stepSize));
-      }
-      return _results;
-    };
-
-    Surface.prototype.colorBetween = function(startColor, endColor, step) {
-      var c;
-
-      c = this.calcColor(startColor, endColor, step);
-      return new THREE.Color(c(24) + c(16) + c(8) + c(0));
-    };
-
-    Surface.prototype.calcColor = function(startColor, endColor, step) {
-      return function(bit) {
-        var end, start;
-
-        start = startColor >> bit & 0xFF;
-        end = endColor >> bit & 0xFF;
-        return (start + (end - start) * step) << bit;
-      };
-    };
-
-    Surface.prototype.colorsBetween = function(colors, step) {
-      var a, f, length, newStep, nextA;
-
-      if (step <= 0) {
-        colors[0];
-      }
-      length = colors.length;
-      if (step >= 1) {
-        colors[length - 1];
-      }
-      a = Math.floor(length * step);
-      f = 1 / length;
-      newStep = (step - (a * f)) / f;
-      nextA = a + 1;
-      if (nextA >= length) {
-        nextA = 0;
-      }
-      return this.colorBetween(colors[a], colors[nextA], newStep);
     };
 
     return Surface;
@@ -279,6 +232,53 @@
     return FishSurface;
 
   })(Surface);
+
+  calcColorArray = function(colors, stepSize) {
+    var i, _i, _results;
+
+    _results = [];
+    for (i = _i = 0; 0 <= stepSize ? _i <= stepSize : _i >= stepSize; i = 0 <= stepSize ? ++_i : --_i) {
+      _results.push(colorsBetween(colors, i / stepSize));
+    }
+    return _results;
+  };
+
+  colorBetween = function(startColor, endColor, step) {
+    var c;
+
+    c = calcColor(startColor, endColor, step);
+    return c(24) + c(16) + c(8) + c(0);
+  };
+
+  calcColor = function(startColor, endColor, step) {
+    return function(bit) {
+      var end, start;
+
+      start = startColor >> bit & 0xFF;
+      end = endColor >> bit & 0xFF;
+      return (start + (end - start) * step) << bit;
+    };
+  };
+
+  colorsBetween = function(colors, step) {
+    var a, f, length, newStep, nextA;
+
+    if (step <= 0) {
+      colors[0];
+    }
+    length = colors.length;
+    if (step >= 1) {
+      colors[length - 1];
+    }
+    a = Math.floor(length * step);
+    f = 1 / length;
+    newStep = (step - (a * f)) / f;
+    nextA = a + 1;
+    if (nextA >= length) {
+      nextA = 0;
+    }
+    return colorBetween(colors[a], colors[nextA], newStep);
+  };
 
   window.Horn = (function(_super) {
     __extends(Horn, _super);
